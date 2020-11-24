@@ -12,8 +12,11 @@ aux_source_directory(source src)
 add_library(sMemPool ${src})
 
 if(ENABLE_TEST)
-    add_executable(test test/malloc_test.cxx)
-    target_link_libraries(test sMemPool)
+    add_executable(test_list test/list_test.cxx)
+    target_link_libraries(test_list sMemPool)
+
+    add_executable(test_pool test/pool_test.cxx)
+    target_link_libraries(test_pool sMemPool)
 endif()
 
 if(ENABLE_GCOV)
