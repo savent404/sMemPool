@@ -26,8 +26,19 @@ static void case_malloc_many(int times = 1024) {
     _free_(ptr);
 }
 
+static void case_check_range() {
+    auto ptr = _malloc_(1);
+    assert(pool.belong(ptr));
+    _free_(ptr);
+
+    ptr = malloc(1);
+    assert(pool.belong(ptr) == false);
+    free(ptr);
+}
+
 int main() {
     case_malloc_free();
     case_malloc_many();
+    case_check_range();
     return 0;
 }

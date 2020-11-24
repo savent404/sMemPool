@@ -54,6 +54,7 @@ struct pool : public allocator {
       add_item(default_size);
     }
   }
+
   ~pool() {
     pool_item* head = &head_;
     pool_item* item = head->prev;
@@ -84,6 +85,7 @@ struct pool : public allocator {
     res = item->get().alloc(n);
     return res;
   }
+
   void free(void* p) override {
     pool_item* item = head_.next;
     void* base = nullptr;
@@ -103,6 +105,26 @@ struct pool : public allocator {
     }
     debug::_assert(false);
   }
+
+  bool belong(void* p) {
+    pool_item* item = head_.next;
+    void* base = nullptr;
+    void* end = nullptr;
+    while (item && item != &head_) {
+      if (!item->isEmpty()) {
+        base = item->get().get_base();
+        end = math::add(base, item->get().get_size());
+        // in range
+        if (math::sub(p, base) >= 0 && math::sub(p, end) <= 0) {
+          item->get().free(p);
+          return true;
+        }
+      }
+      item = item->next;
+    }
+    return false;
+  }
+
   pool(const pool&) = delete;
   pool& operator=(const pool&) = delete;
 
