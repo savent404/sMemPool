@@ -1,19 +1,34 @@
 cmake_minimum_required(VERSION 3.0)
 project(sMemPool CXX C)
 
+option(ENABLE_GCOV "Enable gcov(debug, Linux only)" OFF)
+option(ENABLE_TEST "Enable unit test" OFF)
+
+set(CMAKE_CXX_STANDARD_REQUIRED 14)
+
 include_directories(include)
 aux_source_directory(source src)
 
 add_library(sMemPool ${src})
 
-if(USE_TEST)
+if(ENABLE_TEST)
     add_executable(test test/malloc_test.cxx)
     target_link_libraries(test sMemPool)
-endif(USE_TEST)
+endif()
+
+if(ENABLE_GCOV)
+    SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fprofile-arcs -ftest-coverage")
+    SET(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fprofile-arcs -ftest-coverage")
+endif()
 
 set_target_properties(sMemPool PROPERTIES PUBLIC_HEADER "include/smempool.h")
 
 install(TARGETS sMemPool
         LIBRARY DESTINATION lib
         PUBLIC_HEADER DESTINATION include
+)
+
+add_custom_target(lcov
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    COMMAND lcov -d . -z
 )

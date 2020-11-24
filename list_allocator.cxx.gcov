@@ -1,0 +1,110 @@
+        -:    0:Source:/home/savent/git/sMemPool/source/list_allocator.cxx
+        -:    0:Programs:2
+        -:    1:#include "internal/list_allocator.hxx"
+        -:    2:#include "internal/utils.hxx"
+        -:    3:
+        -:    4:namespace smem {
+        -:    5:
+        2:    6:list_allocator::list_allocator(void *base, size_t size)
+        2:    7:    : allocator(base, size), free_blocks_(nullptr) {
+        -:    8:  static_assert(sizeof(header) >= sizeof(block));
+        2:    9:  debug::_assert(size > sizeof(block));
+        2:   10:  free_blocks_ = reinterpret_cast<block *>(base_);
+        2:   11:  free_blocks_->size = size;
+        2:   12:  free_blocks_->next = nullptr;
+        2:   13:}
+        -:   14:
+    #####:   15:list_allocator::~list_allocator() { free_blocks_->next = nullptr; }
+        -:   16:
+     1308:   17:void *list_allocator::alloc(size_t size, int align) {
+     1308:   18:  debug::_assert(size != 0 && align != 0);
+        -:   19:
+        -:   20:  // makre sure '*(int*)(malloc(1)) = 1' would not crash others
+     1308:   21:  size = math::align_size(size, sizeof(void *));
+        -:   22:
+     1308:   23:  block *prev = nullptr;
+     1308:   24:  block *free = free_blocks_;
+        -:   25:
+     1694:   26:  while (free != nullptr) {
+        -:   27:    int adj =
+     1498:   28:        math::align_forwrad_adjust_with_header(free, align, sizeof(header));
+     1498:   29:    size_t body_size = size + adj;
+        -:   30:
+     1691:   31:    if (free->size < body_size) {
+      193:   32:      prev = free;
+      193:   33:      free = free->next;
+      193:   34:      continue;
+        -:   35:    }
+        -:   36:
+        -:   37:    // give them this block
+     1305:   38:    if (free->size - body_size <= sizeof(header)) {
+        3:   39:      body_size = free_blocks_->size;
+        3:   40:      if (!prev)
+        2:   41:        free_blocks_ = free->next;
+        -:   42:      else
+        1:   43:        prev->next = free->next;
+        -:   44:    }
+        -:   45:    // split this block and create a small one
+        -:   46:    else {
+     1302:   47:      block *next = reinterpret_cast<block *>(math::add(free, body_size));
+     1302:   48:      next->size = free->size - body_size;
+     1302:   49:      next->next = free->next;
+     1302:   50:      if (!prev)
+     1111:   51:        free_blocks_ = next;
+        -:   52:      else
+      191:   53:        prev->next = next;
+        -:   54:    }
+        -:   55:
+     1305:   56:    void *res = math::add(free, adj);
+     1305:   57:    header *h = reinterpret_cast<header *>(math::sub(res, sizeof(header)));
+     1305:   58:    h->size = body_size;
+     1305:   59:    h->adj = adj;
+     1305:   60:    used_memory_ += body_size;
+     1305:   61:    num_allocations_++;
+        -:   62:
+     1305:   63:    debug::_assert(math::align_forward_adjust(res, align) == 0);
+     1305:   64:    return res;
+        -:   65:  }
+        3:   66:  return nullptr;
+        -:   67:}
+        -:   68:
+     1057:   69:void list_allocator::free(void *p) {
+     1057:   70:  debug::_assert(p != nullptr);
+     1057:   71:  header *h = reinterpret_cast<header *>(math::sub(p, sizeof(header)));
+        -:   72:
+     1057:   73:  int block_size = h->size;
+     1057:   74:  void *block_begin = reinterpret_cast<void *>(math::sub(p, h->adj));
+        -:   75:  void *block_end =
+     1057:   76:      reinterpret_cast<void *>(math::add(block_begin, block_size));
+     1057:   77:  block *prev = nullptr;
+     1057:   78:  block *free = free_blocks_;
+        -:   79:
+     1449:   80:  while (free != nullptr) {
+     1250:   81:    if (math::sub(free, block_end) >= 0) break;
+      196:   82:    prev = free;
+      196:   83:    free = free->next;
+        -:   84:  }
+     1057:   85:  if (prev == nullptr) {
+      861:   86:    prev = reinterpret_cast<block *>(block_begin);
+      861:   87:    prev->size = block_size;
+      861:   88:    prev->next = free_blocks_;
+      861:   89:    free_blocks_ = prev;
+      196:   90:  } else if (math::eq(math::add(prev, prev->size), block_begin)) {
+        5:   91:    prev->size += block_size;
+        -:   92:  } else {
+      191:   93:    block *tmp = reinterpret_cast<block *>(block_begin);
+      191:   94:    tmp->size = block_size;
+      191:   95:    tmp->next = prev->next;
+      191:   96:    prev->next = tmp;
+      191:   97:    prev = tmp;
+        -:   98:  }
+        -:   99:
+     1057:  100:  if (free != nullptr && math::eq(free, block_end)) {
+     1049:  101:    prev->size += free->size;
+     1049:  102:    prev->next = free->next;
+        -:  103:  }
+        -:  104:
+     1057:  105:  num_allocations_--;
+     1057:  106:  used_memory_ -= block_size;
+     1057:  107:}
+        -:  108:}  // namespace smem

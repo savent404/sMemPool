@@ -6,6 +6,8 @@
 extern "C" {
 #endif
 
+void smem_init(void);
+
 void* smem_alloc(size_t n);
 
 void smem_free(void* ptr);

@@ -5,12 +5,25 @@
 
 namespace smem {
 
-template <typename _T>
 struct allocator {
  public:
-  explict allocator(smem_alloctor_t allocator);
+  allocator(void* base, size_t size);
+  allocator(allocator&& m);
+  virtual ~allocator();
 
-  void* alloc(size_t n);
-  void free(void* n);
+  virtual void* alloc(size_t size, int alig = sizeof(void*)) = 0;
+  virtual void free(void* p) = 0;
+
+  void* get_base() const { return base_; }
+  size_t get_size() const { return size_; }
+  size_t get_used_memory() const { return used_memory_; }
+  size_t get_num_allocations() const { return num_allocations_; }
+  size_t get_last_size() const { return size_ - used_memory_; }
+
+ protected:
+  void* base_;
+  size_t size_;
+  size_t used_memory_;
+  size_t num_allocations_;
 };
 }  // namespace smem

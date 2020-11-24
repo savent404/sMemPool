@@ -1,25 +1,38 @@
 #include <smempool.h>
+#include "internal/list_allocator.hxx"
+#include "internal/pool_allocator.hxx"
+#include "internal/proxy_allocator.hxx"
+#include "internal/utils.hxx"
 
-#include <stdlib.h>
-static smem_alloctor_t global_allocator = {.malloc = malloc, .free = free};
-static smem_mode_t global_mode = SMEM_MODE_LINE;
-
+static smem::allocator* global = nullptr;
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void* smem_alloc(size_t n) { return global_allocator.malloc(n); }
-
-void smem_free(void* ptr) { global_allocator.free(ptr); }
-
-void smem_set_alloctor(smem_alloctor_t _alloc) {
-  global_allocator.malloc = _alloc.malloc;
-  global_allocator.free = _alloc.free;
+__attribute__((weak)) void smem_init(void) {
+  size_t size = 1024 * 10;  // 10K
+  char* buffer = new char[size];
+  global = new smem::list_allocator(buffer, size);
 }
 
-void smem_set_alloctor_mode(smem_mode_t global_mode) {
-
+void* smem_alloc(size_t n) {
+  if (!global) {
+    return nullptr;
+  }
+  auto res = global->alloc(n);
+  if (!res) smem::debug::_assert(global->get_last_size() <= n + 32);
+  return res;
 }
+
+void smem_free(void* ptr) {
+  if (global) {
+    global->free(ptr);
+  }
+}
+
+void smem_set_alloctor(smem_alloctor_t _alloc) {}
+
+void smem_set_alloctor_mode(smem_mode_t global_mode) {}
 
 #ifdef __cplusplus
 }
