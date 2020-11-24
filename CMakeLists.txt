@@ -12,3 +12,8 @@ if(USE_TEST)
 endif(USE_TEST)
 
 set_target_properties(sMemPool PROPERTIES PUBLIC_HEADER "include/smempool.h")
+
+install(TARGETS sMemPool
+        LIBRARY DESTINATION lib
+        PUBLIC_HEADER DESTINATION include
+)
