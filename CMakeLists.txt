@@ -20,6 +20,9 @@ if(ENABLE_TEST)
 
     add_executable(test_pool test/pool_test.cxx)
     target_link_libraries(test_pool sMemPool)
+
+    add_executable(test_api test/api_test.cxx)
+    target_link_libraries(test_api sMemPool)
 endif()
 
 if(ENABLE_GCOV)
@@ -32,9 +35,4 @@ set_target_properties(sMemPool PROPERTIES PUBLIC_HEADER "include/smempool.h")
 install(TARGETS sMemPool
         LIBRARY DESTINATION lib
         PUBLIC_HEADER DESTINATION include
-)
-
-add_custom_target(lcov
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-    COMMAND lcov -d . -z
 )

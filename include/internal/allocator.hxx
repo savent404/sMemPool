@@ -13,12 +13,15 @@ struct allocator {
 
   virtual void* alloc(size_t size, int alig = sizeof(void*)) = 0;
   virtual void free(void* p) = 0;
+  virtual bool is_owner(void* ptr) = 0;
+  virtual size_t calculate_obj_size(size_t n) = 0;
 
   void* get_base() const { return base_; }
   size_t get_size() const { return size_; }
   size_t get_used_memory() const { return used_memory_; }
   size_t get_num_allocations() const { return num_allocations_; }
   size_t get_last_size() const { return size_ - used_memory_; }
+  size_t can_alloc(size_t n) { return get_last_size() >= calculate_obj_size(n); }
 
  protected:
   void* base_;

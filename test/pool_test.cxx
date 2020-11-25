@@ -28,11 +28,11 @@ static void case_malloc_many(int times = 1024) {
 
 static void case_check_range() {
     auto ptr = _malloc_(1);
-    assert(pool.belong(ptr));
+    assert(pool.is_owner(ptr));
     _free_(ptr);
 
     ptr = malloc(1);
-    assert(pool.belong(ptr) == false);
+    assert(pool.is_owner(ptr) == false);
     free(ptr);
 }
 

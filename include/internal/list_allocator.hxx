@@ -10,6 +10,8 @@ struct list_allocator : public allocator {
 
   void* alloc(size_t size, int align) override;
   void free(void* p) override;
+  bool is_owner(void* p) override;
+  size_t calculate_obj_size(size_t n) override;
 
   list_allocator(const list_allocator&) = delete;
   list_allocator& operator=(const list_allocator&) = delete;

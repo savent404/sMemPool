@@ -105,4 +105,16 @@ void list_allocator::free(void *p) {
   num_allocations_--;
   used_memory_ -= block_size;
 }
+
+bool list_allocator::is_owner(void* p) {
+  void* base_begin = get_base();
+  void* base_end = math::add(base_begin, get_size());
+  return (math::sub(base_begin, p) <= 0) && (math::sub(p, base_end) <= 0);
+}
+
+size_t list_allocator::calculate_obj_size(size_t n) {
+  n = math::align_size(n, sizeof(void*));
+  return n + math::align_forwrad_adjust_with_header(nullptr, sizeof(void*), sizeof(header));
+}
+
 }  // namespace smem

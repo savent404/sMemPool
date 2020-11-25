@@ -54,6 +54,19 @@ struct pool : public allocator {
       add_item(default_size);
     }
   }
+  pool(malloc_ptr m, free_ptr f, size_t default_size, size_t default_num,
+       size_t slab_size)
+      : allocator(nullptr, default_size * default_num),
+        head_(std::unique_ptr<_Tp>(nullptr)),
+        malloc_(m),
+        free_(f),
+        size_(default_size),
+        num_(default_num),
+        slab_size_(slab_size) {
+    for (int i = 0; i < default_num; i++) {
+      add_item(default_size);
+    }
+  }
 
   ~pool() {
     pool_item* head = &head_;
@@ -67,63 +80,23 @@ struct pool : public allocator {
   }
 
   void* alloc(size_t n, int align) override {
-    pool_item* item = head_.next;
+    pool_item* item = find_alloc_item(n);
     void* res = nullptr;
-
-    while (item && item != &head_) {
-      if (item->isEmpty()) continue;
-      if (item->get().get_last_size() >= n) {
-        res = item->get().alloc(n);
-        if (res) return res;
-      }
-      item = item->next;
+    if (item) {
+      return do_alloc(item, n);
     }
-
     // need a new pool item
-    size_t item_size = n > size_ ? n * 2 : size_;
+    size_t item_size = n * 2 > size_ ? n * 2 : size_;
     item = add_item(item_size);
-    res = item->get().alloc(n);
-    return res;
+    return do_alloc(item, n);
   }
 
   void free(void* p) override {
-    pool_item* item = head_.next;
-    void* base = nullptr;
-    void* end = nullptr;
-    while (item && item != &head_) {
-      if (!item->isEmpty()) {
-        base = item->get().get_base();
-        end = math::add(base, item->get().get_size());
-
-        // in range
-        if (math::sub(p, base) >= 0 && math::sub(p, end) <= 0) {
-          item->get().free(p);
-          return;
-        }
-      }
-      item = item->next;
-    }
-    debug::_assert(false);
+    auto item = find_owner_item(p);
+    if (item) do_free(item, p);
   }
 
-  bool belong(void* p) {
-    pool_item* item = head_.next;
-    void* base = nullptr;
-    void* end = nullptr;
-    while (item && item != &head_) {
-      if (!item->isEmpty()) {
-        base = item->get().get_base();
-        end = math::add(base, item->get().get_size());
-        // in range
-        if (math::sub(p, base) >= 0 && math::sub(p, end) <= 0) {
-          item->get().free(p);
-          return true;
-        }
-      }
-      item = item->next;
-    }
-    return false;
-  }
+  bool is_owner(void* p) override { return find_owner_item(p) != nullptr; }
 
   pool(const pool&) = delete;
   pool& operator=(const pool&) = delete;
@@ -137,12 +110,49 @@ struct pool : public allocator {
     return item;
   }
   bool remove_item(pool_item* it) { return it->remove(); }
+  pool_item* find_alloc_item(size_t n) {
+    pool_item* item = head_.next;
+    while (item && item != &head_) {
+      if (!item->isEmpty() && item->get().can_alloc(n)) {
+        return item;
+      }
+      item = item->next;
+    }
+    return nullptr;
+  }
+  pool_item* find_owner_item(void* p) {
+    pool_item* item = head_.next;
+    while (item && item != &head_) {
+      if (!item->isEmpty() && item->get().is_owner(p)) {
+        return item;
+      }
+      item = item->next;
+    }
+    return nullptr;
+  }
+  size_t calculate_obj_size(size_t n) override { return 0; }
 
  private:
+  void* do_alloc(pool_item* item, size_t n) {
+    auto item_used_size = item->get().get_used_memory();
+    auto item_used_num = item->get().get_num_allocations();
+    auto res = item->get().alloc(n);
+    used_memory_ += item->get().get_used_memory() - item_used_size;
+    num_allocations_ += item->get().get_num_allocations() - item_used_num;
+    return res;
+  }
+  void do_free(pool_item* item, void* ptr) {
+    auto item_used_size = item->get().get_used_memory();
+    auto item_used_num = item->get().get_num_allocations();
+    item->get().free(ptr);
+    used_memory_ += item->get().get_used_memory() - item_used_size;
+    num_allocations_ += item->get().get_num_allocations() - item_used_num;
+  }
   pool_item head_;
   malloc_ptr malloc_;
   free_ptr free_;
   size_t size_;
+  size_t slab_size_;
   size_t num_;
 };
 

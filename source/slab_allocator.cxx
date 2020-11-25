@@ -46,4 +46,14 @@ void slab_allocator::free(void* p) {
   used_memory_ -= obj_size_;
   num_allocations_--;
 }
+
+bool slab_allocator::is_owner(void* p) {
+  void* base_begin = get_base();
+  void* base_end = math::add(base_begin, get_size());
+  return (math::sub(base_begin, p) <= 0) && (math::sub(p, base_end) <= 0);
+}
+
+size_t slab_allocator::calculate_obj_size(size_t n) {
+  return n;
+}
 }  // namespace smem

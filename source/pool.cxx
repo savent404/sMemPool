@@ -1,5 +1,6 @@
 #include "internal/pool.hxx"
 #include "internal/list_allocator.hxx"
+#include "internal/slab_allocator.hxx"
 
 namespace smem {
 
@@ -31,6 +32,15 @@ pool<list_allocator>::allocator_ptr pool<list_allocator>::new_item(size_t s) {
   void* base = malloc_(s);
   new (p) list_allocator(base, s);
   return std::unique_ptr<list_allocator>(p);
+}
+
+template <>
+pool<slab_allocator>::allocator_ptr pool<slab_allocator>::new_item(size_t s) {
+  slab_allocator* p =
+      reinterpret_cast<slab_allocator*>(malloc_(sizeof(slab_allocator)));
+  void* base = malloc_(s);
+  new (p) slab_allocator(base, s, sizeof(void*), slab_size_);
+  return std::unique_ptr<slab_allocator>(p);
 }
 
 }  // namespace smem
