@@ -15,6 +15,9 @@ if(ENABLE_TEST)
     add_executable(test_list test/list_test.cxx)
     target_link_libraries(test_list sMemPool)
 
+    add_executable(test_slab test/slab_test.cxx)
+    target_link_libraries(test_slab sMemPool)
+
     add_executable(test_pool test/pool_test.cxx)
     target_link_libraries(test_pool sMemPool)
 endif()

@@ -8,21 +8,19 @@ namespace smem {
 slab_allocator::slab_allocator(void* mem, size_t size, int obj_alig,
                                size_t obj_size)
     : allocator(mem, size),
-      obj_alig_(0),
-      obj_size_(0),
+      obj_alig_(obj_alig),
+      obj_size_(obj_size),
       obj_num_(0),
       free_list_(nullptr) {
   debug::_assert(obj_size_ >= sizeof(void*));
-  debug::_assert(obj_alig >= obj_size);
+  // debug::_assert(obj_alig >= obj_size);
   int adj = math::align_forward_adjust(mem, obj_alig);
   free_list_ = reinterpret_cast<void**>(math::add(mem, adj));
-  obj_alig_ = obj_alig;
-  obj_size_ = obj_size;
-  obj_num_ = (size - adj) / obj_alig_;
+  obj_num_ = (size - adj) / obj_size_;
   void** p = free_list_;
 
   for (size_t i = 0; i < obj_num_ - 1; i++) {
-    *p = math::add(reinterpret_cast<void*>(p), obj_alig_);
+    *p = math::add(reinterpret_cast<void*>(p), obj_size_);
     p = reinterpret_cast<void**>(*p);
   }
   *p = nullptr;
@@ -31,7 +29,7 @@ slab_allocator::slab_allocator(void* mem, size_t size, int obj_alig,
 slab_allocator::~slab_allocator() { free_list_ = nullptr; }
 
 void* slab_allocator::alloc(size_t size, int align) {
-  debug::_assert(size + sizeof(void*) <= obj_size_);
+  debug::_assert(size <= obj_size_);
   debug::_assert(align == obj_alig_);
 
   void* p = free_list_;

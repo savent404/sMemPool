@@ -15,3 +15,9 @@ mv *.gcov build/gcov/pool
 mkdir -p build/gcov/list_allocator
 gcov build/CMakeFiles/sMemPool.dir/source/list_allocator.cxx.gcno
 mv *.gcov build/gcov/list_allocator
+
+./build/test_slab
+mkdir -p build/gcov/slab_allocator
+gcov build/CMakeFiles/test_slab.dir/test/slab_test.cxx.gcno
+gcov build/CMakeFiles/sMemPool.dir/source/slab_allocator.cxx.gcno
+mv *.gcov build/gcov/slab_allocator
