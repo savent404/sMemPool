@@ -4,8 +4,8 @@
 
 #include "internal/list_allocator.hxx"
 #include "internal/pool.hxx"
-#include "internal/pool_allocator.hxx"
 #include "internal/proxy_allocator.hxx"
+#include "internal/slab_allocator.hxx"
 #include "internal/utils.hxx"
 
 #ifdef __cplusplus
@@ -24,7 +24,8 @@ void smem_init(const smem_config_t* config) {
   if (config->list_default_bs) {
     list_pool = reinterpret_cast<list_pool_type*>(
         global->malloc(sizeof(list_pool_type)));
-    new (list_pool) list_pool_type(config->malloc, config->free, config->list_default_bs);
+    new (list_pool)
+        list_pool_type(config->malloc, config->free, config->list_default_bs);
   }
 }
 

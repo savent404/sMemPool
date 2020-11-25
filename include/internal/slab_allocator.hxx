@@ -3,16 +3,16 @@
 #include "internal/allocator.hxx"
 
 namespace smem {
-struct pool_allocator : public allocator {
+struct slab_allocator : public allocator {
  public:
-  pool_allocator(void* mem, size_t size, int obj_alig, size_t obj_size);
-  ~pool_allocator();
+  slab_allocator(void* mem, size_t size, int obj_alig, size_t obj_size);
+  ~slab_allocator();
 
   void* alloc(size_t size, int alig) override;
   void free(void* ptr) override;
 
-  pool_allocator(const pool_allocator&) = delete;
-  pool_allocator& operator=(const pool_allocator&) = delete;
+  slab_allocator(const slab_allocator&) = delete;
+  slab_allocator& operator=(const slab_allocator&) = delete;
 
  private:
   int obj_alig_;

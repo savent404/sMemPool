@@ -1,10 +1,11 @@
-#include "internal/pool_allocator.hxx"
 #include <assert.h>
+
+#include "internal/slab_allocator.hxx"
 #include "internal/utils.hxx"
 
 namespace smem {
 
-pool_allocator::pool_allocator(void* mem, size_t size, int obj_alig,
+slab_allocator::slab_allocator(void* mem, size_t size, int obj_alig,
                                size_t obj_size)
     : allocator(mem, size),
       obj_alig_(0),
@@ -27,9 +28,9 @@ pool_allocator::pool_allocator(void* mem, size_t size, int obj_alig,
   *p = nullptr;
 }
 
-pool_allocator::~pool_allocator() { free_list_ = nullptr; }
+slab_allocator::~slab_allocator() { free_list_ = nullptr; }
 
-void* pool_allocator::alloc(size_t size, int align) {
+void* slab_allocator::alloc(size_t size, int align) {
   debug::_assert(size + sizeof(void*) <= obj_size_);
   debug::_assert(align == obj_alig_);
 
@@ -41,10 +42,10 @@ void* pool_allocator::alloc(size_t size, int align) {
   return p;
 }
 
-void pool_allocator::free(void* p) {
-    *reinterpret_cast<void**>(p) = free_list_;
-    free_list_ = reinterpret_cast<void**>(p);
-    used_memory_ -= obj_size_;
-    num_allocations_--;
+void slab_allocator::free(void* p) {
+  *reinterpret_cast<void**>(p) = free_list_;
+  free_list_ = reinterpret_cast<void**>(p);
+  used_memory_ -= obj_size_;
+  num_allocations_--;
 }
 }  // namespace smem
