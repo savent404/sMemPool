@@ -12,6 +12,7 @@ bool pool_item::add(pool_item* item) {
   item->prev = this;
   this->next->prev = item;
   this->next = item;
+  return true;
 }
 
 bool pool_item::remove() {
@@ -19,6 +20,7 @@ bool pool_item::remove() {
   this->next->prev = this->prev;
   this->next = nullptr;
   this->prev = nullptr;
+  return true;
 }
 
 bool pool_item::isEmpty() { return item_.get() == nullptr; }

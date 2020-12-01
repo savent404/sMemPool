@@ -50,7 +50,7 @@ struct pool : public allocator {
         free_(f),
         size_(default_size),
         num_(default_num) {
-    for (int i = 0; i < default_num; i++) {
+    for (size_t i = 0; i < default_num; i++) {
       add_item(default_size);
     }
   }
@@ -61,9 +61,9 @@ struct pool : public allocator {
         malloc_(m),
         free_(f),
         size_(default_size),
-        num_(default_num),
-        slab_size_(slab_size) {
-    for (int i = 0; i < default_num; i++) {
+        slab_size_(slab_size),
+        num_(default_num) {
+    for (size_t i = 0; i < default_num; i++) {
       add_item(default_size);
     }
   }
@@ -81,7 +81,6 @@ struct pool : public allocator {
 
   void* alloc(size_t n, int align) override {
     pool_item* item = find_alloc_item(n);
-    void* res = nullptr;
     if (item) {
       return do_alloc(item, n);
     }

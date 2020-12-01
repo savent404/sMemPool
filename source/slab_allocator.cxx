@@ -19,7 +19,7 @@ slab_allocator::slab_allocator(void* mem, size_t size, int obj_alig,
   obj_num_ = (size - adj) / obj_size_;
   void** p = free_list_;
 
-  for (size_t i = 0; i < obj_num_ - 1; i++) {
+  for (int i = 0; i < obj_num_ - 1; i++) {
     *p = math::add(reinterpret_cast<void*>(p), obj_size_);
     p = reinterpret_cast<void**>(*p);
   }

@@ -94,7 +94,7 @@ void smem_init(const smem_config_t* config) {
 }
 
 smem::allocator* find_allocator(size_t n) {
-  static int matrix_size[6] = {4, 8, 16, 32, 64, 128};
+  static size_t matrix_size[6] = {4, 8, 16, 32, 64, 128};
   for (int i = 0; i < 6; i++) {
     if (n <= matrix_size[i] && slab_pool[i]) {
       return slab_pool[i];

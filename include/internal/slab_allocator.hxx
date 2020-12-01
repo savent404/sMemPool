@@ -18,7 +18,7 @@ struct slab_allocator : public allocator {
 
  private:
   int obj_alig_;
-  int obj_size_;
+  size_t obj_size_;
   int obj_num_;
   void** free_list_;
 };
