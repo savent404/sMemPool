@@ -56,4 +56,11 @@ bool slab_allocator::is_owner(void* p) {
 size_t slab_allocator::calculate_obj_size(size_t n) {
   return n;
 }
+
+bool slab_allocator::is_full_() const {
+  return used_memory_ >= get_size();
+}
+bool slab_allocator::can_alloc(size_t n) {
+  return !is_full_() && (obj_size_ >= n);
+}
 }  // namespace smem

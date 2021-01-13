@@ -117,4 +117,20 @@ size_t list_allocator::calculate_obj_size(size_t n) {
   return n + math::align_forwrad_adjust_with_header(nullptr, sizeof(void*), sizeof(header));
 }
 
+size_t list_allocator::get_maxium_block_sz_() const {
+  size_t max = 0;
+  block *free = free_blocks_;
+
+  while (free != nullptr) {
+    if (max < free->size)
+      max = free->size;
+    free = free->next;
+  }
+  return max;
+}
+
+bool list_allocator::can_alloc(size_t n) {
+  return get_maxium_block_sz_() >= calculate_obj_size(n);
+}
+
 }  // namespace smem

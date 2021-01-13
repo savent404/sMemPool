@@ -130,12 +130,14 @@ struct pool : public allocator {
     return nullptr;
   }
   size_t calculate_obj_size(size_t n) override { return 0; }
+  bool can_alloc(size_t n) override { return false; }
 
  private:
   void* do_alloc(pool_item* item, size_t n) {
     auto item_used_size = item->get().get_used_memory();
     auto item_used_num = item->get().get_num_allocations();
     auto res = item->get().alloc(n);
+    smem::debug::_assert(res);
     used_memory_ += item->get().get_used_memory() - item_used_size;
     num_allocations_ += item->get().get_num_allocations() - item_used_num;
     return res;

@@ -12,11 +12,13 @@ struct slab_allocator : public allocator {
   void free(void* ptr) override;
   bool is_owner(void *p) override;
   size_t calculate_obj_size(size_t n) override;
+  bool can_alloc(size_t n) override;
 
   slab_allocator(const slab_allocator&) = delete;
   slab_allocator& operator=(const slab_allocator&) = delete;
 
  private:
+  bool is_full_() const;
   int obj_alig_;
   size_t obj_size_;
   int obj_num_;
